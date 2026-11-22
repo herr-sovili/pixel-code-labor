@@ -1,0 +1,324 @@
+
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pixel-Code-Labor</title>
+<style>
+* { box-sizing: border-box; }
+body {
+  font-family: Arial, sans-serif;
+  background: #f3f6fa;
+  color: #263345;
+  margin: 0;
+  padding: 25px;
+}
+main {
+  max-width: 1100px;
+  margin: auto;
+  background: white;
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 3px 14px #00000012;
+}
+h1 { color: #24548a; }
+.workspace {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 30px;
+  margin-top: 25px;
+}
+#pixelCanvas {
+  width: 100%;
+  max-width: 450px;
+  aspect-ratio: 1;
+  border: 2px solid #555;
+  display: block;
+  background: #ffdddd;
+}
+.controls {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+.control-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.control-row label { width: 85px; }
+input[type="number"] {
+  width: 75px;
+  padding: 7px;
+  font-size: 16px;
+}
+input[type="range"] {
+  flex: 1;
+  min-width: 70px;
+}
+textarea {
+  width: 100%;
+  height: 300px;
+  padding: 12px;
+  border: 1px solid #aab7c5;
+  border-radius: 8px;
+  font: 17px/1.5 monospace;
+  resize: vertical;
+}
+button {
+  padding: 10px 15px;
+  border: 1px solid #aab7c5;
+  border-radius: 7px;
+  background: #f5f8fc;
+  cursor: pointer;
+  font-size: 15px;
+}
+button:hover { background: #e4eefb; }
+.buttons {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+.note {
+  color: #586777;
+  font-size: 14px;
+}
+#status {
+  min-height: 22px;
+  color: #24548a;
+  font-size: 14px;
+}
+@media(max-width: 750px) {
+  .workspace { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<main>
+<h1>Pixel-Code-Labor</h1>
+<p>
+  <strong>Wie entstehen digitale Bilder?</strong>
+  Erstelle ein Schwarz-Weiß-Bild ausschließlich
+  mithilfe der Zahlen 0 und 1.
+</p>
+
+<p><strong>0 = Weiß | 1 = Schwarz</strong></p>
+
+<div class="workspace">
+
+<section>
+  <h2>Pixelbild</h2>
+  <canvas id="pixelCanvas"
+    width="600" height="600"></canvas>
+  <p class="note">
+    Das Bild entsteht automatisch, während du
+    den Binärcode eingibst.
+  </p>
+  <button id="saveImage">Bild speichern</button>
+</section>
+
+<section>
+  <h2>Einstellungen</h2>
+
+  <div class="controls">
+    <div class="control-row">
+      <label for="widthNumber">Bildbreite</label>
+      <input type="number" id="widthNumber"
+        min="1" max="64" value="10">
+      <input type="range" id="widthRange"
+        min="1" max="64" value="10">
+    </div>
+
+    <div class="control-row">
+      <label for="heightNumber">Bildhöhe</label>
+      <input type="number" id="heightNumber"
+        min="1" max="64" value="10">
+      <input type="range" id="heightRange"
+        min="1" max="64" value="10">
+    </div>
+  </div>
+
+  <h2>Binärcode</h2>
+  <textarea id="binaryCode"
+    spellcheck="false"
+    placeholder="Gib hier 0 und 1 ein ..."></textarea>
+
+  <p id="status" aria-live="polite"></p>
+
+  <div class="buttons">
+    <button id="clear">Neu starten</button>
+    <button id="readable">Lesbares Format</button>
+    <button id="raw">Raw-Format</button>
+  </div>
+
+  <p class="note">
+    Leerzeichen und Zeilenumbrüche sind erlaubt.
+    Die Pixel werden von links nach rechts und
+    von oben nach unten gefüllt.
+  </p>
+</section>
+</div>
+
+<hr>
+
+<h2>Arbeitsauftrag</h2>
+<p>
+  Stelle die Bildbreite auf <strong>3</strong>
+  und die Bildhöhe auf <strong>5</strong>.
+  Erstelle anschließend den Buchstaben
+  <strong>A</strong> ausschließlich mit
+  Nullen und Einsen.
+</p>
+
+<p class="note">
+  Tipp: Ein Pixel wird schwarz, wenn du eine
+  1 eingibst. Bei einer 0 bleibt es weiß.
+</p>
+
+</main>
+
+<script>
+const canvas = document.getElementById("pixelCanvas");
+const ctx = canvas.getContext("2d");
+
+const code = document.getElementById("binaryCode");
+const statusText = document.getElementById("status");
+
+const widthNumber =
+  document.getElementById("widthNumber");
+const widthRange =
+  document.getElementById("widthRange");
+const heightNumber =
+  document.getElementById("heightNumber");
+const heightRange =
+  document.getElementById("heightRange");
+
+let imageWidth = 10;
+let imageHeight = 10;
+
+function clamp(value) {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return 10;
+  return Math.max(1, Math.min(64, Math.round(number)));
+}
+
+function updateDimensions() {
+  imageWidth = clamp(widthNumber.value);
+  imageHeight = clamp(heightNumber.value);
+
+  widthNumber.value = imageWidth;
+  widthRange.value = imageWidth;
+  heightNumber.value = imageHeight;
+  heightRange.value = imageHeight;
+
+  drawImage();
+}
+
+function drawImage() {
+  const width = canvas.width;
+  const height = canvas.height;
+
+  const pixelWidth = width / imageWidth;
+  const pixelHeight = height / imageHeight;
+
+  const binary = code.value.replace(/[^01]/g, "");
+  const total = imageWidth * imageHeight;
+
+  ctx.clearRect(0, 0, width, height);
+
+  for (let y = 0; y < imageHeight; y++) {
+    for (let x = 0; x < imageWidth; x++) {
+      const index = y * imageWidth + x;
+
+      let color = "#ffdddd";
+
+      if (index < binary.length) {
+        color = binary[index] === "1"
+          ? "#000000"
+          : "#ffffff";
+      }
+
+      const left = x * pixelWidth;
+      const top = y * pixelHeight;
+
+      ctx.fillStyle = color;
+      ctx.fillRect(
+        left, top, pixelWidth, pixelHeight
+      );
+
+      ctx.strokeStyle = "#cccccc";
+      ctx.lineWidth = 1;
+      ctx.strokeRect(
+        left, top, pixelWidth, pixelHeight
+      );
+    }
+  }
+
+  statusText.textContent =
+    Math.min(binary.length, total) +
+    " von " + total + " Pixeln eingegeben";
+
+  if (binary.length > total) {
+    statusText.textContent +=
+      " – zusätzliche Bits werden nicht angezeigt.";
+  }
+}
+
+function connectDimension(numberInput, rangeInput) {
+  numberInput.addEventListener("input", () => {
+    rangeInput.value = numberInput.value;
+    updateDimensions();
+  });
+
+  rangeInput.addEventListener("input", () => {
+    numberInput.value = rangeInput.value;
+    updateDimensions();
+  });
+}
+
+connectDimension(widthNumber, widthRange);
+connectDimension(heightNumber, heightRange);
+
+code.addEventListener("input", drawImage);
+
+document.getElementById("clear")
+  .addEventListener("click", () => {
+    code.value = "";
+    drawImage();
+  });
+
+document.getElementById("readable")
+  .addEventListener("click", () => {
+    const binary = code.value.replace(/[^01]/g, "");
+    const rows = [];
+
+    for (let i = 0; i < binary.length;
+         i += imageWidth) {
+      rows.push(binary.slice(i, i + imageWidth));
+    }
+
+    code.value = rows.join("\n");
+    drawImage();
+  });
+
+document.getElementById("raw")
+  .addEventListener("click", () => {
+    code.value = code.value.replace(/[^01]/g, "");
+    drawImage();
+  });
+
+document.getElementById("saveImage")
+  .addEventListener("click", () => {
+    const link = document.createElement("a");
+    link.download = "mein-pixelbild.png";
+    link.href = canvas.toDataURL("image/png");
+    link.click();
+  });
+
+drawImage();
+</script>
+</body>
+</html>
