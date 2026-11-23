@@ -237,8 +237,11 @@ ctx.fillRect(0, 0, width, height);
           : "#ffffff";
       }
 
-    const left = x * pixelSize;
-    const top = y * pixelSize;
+   const offsetX = (width - imageWidth * pixelSize) / 2;
+const offsetY = (height - imageHeight * pixelSize) / 2;
+
+const left = offsetX + x * pixelSize;
+const top = offsetY + y * pixelSize;
 
      ctx.fillStyle = color;
 ctx.fillRect(
@@ -320,15 +323,18 @@ document.getElementById("saveImage")
 
     const exportCtx = exportCanvas.getContext("2d");
 
-    exportCtx.drawImage(
-      canvas,
-      0, 0,
-      imageWidth * pixelSize,
-      imageHeight * pixelSize,
-      0, 0,
-      exportCanvas.width,
-      exportCanvas.height
-    );
+   const offsetX = (canvas.width - imageWidth * pixelSize) / 2;
+const offsetY = (canvas.height - imageHeight * pixelSize) / 2;
+
+exportCtx.drawImage(
+  canvas,
+  offsetX, offsetY,
+  imageWidth * pixelSize,
+  imageHeight * pixelSize,
+  0, 0,
+  exportCanvas.width,
+  exportCanvas.height
+);
 
     const link = document.createElement("a");
     link.download = "mein-pixelbild.png";
