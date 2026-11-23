@@ -213,13 +213,17 @@ function drawImage() {
   const width = canvas.width;
   const height = canvas.height;
 
-  const pixelWidth = width / imageWidth;
-  const pixelHeight = height / imageHeight;
+  const pixelSize = Math.min(
+  width / imageWidth,
+  height / imageHeight
+);
 
   const binary = code.value.replace(/[^01]/g, "");
   const total = imageWidth * imageHeight;
 
   ctx.clearRect(0, 0, width, height);
+  ctx.fillStyle = "#cccccc";
+ctx.fillRect(0, 0, width, height);
 
   for (let y = 0; y < imageHeight; y++) {
     for (let x = 0; x < imageWidth; x++) {
@@ -233,19 +237,19 @@ function drawImage() {
           : "#ffffff";
       }
 
-      const left = x * pixelWidth;
-      const top = y * pixelHeight;
+    const left = x * pixelSize;
+    const top = y * pixelSize;
 
-      ctx.fillStyle = color;
-      ctx.fillRect(
-        left, top, pixelWidth, pixelHeight
-      );
+     ctx.fillStyle = color;
+ctx.fillRect(
+  left, top, pixelSize, pixelSize
+);
 
-      ctx.strokeStyle = "#cccccc";
-      ctx.lineWidth = 1;
-      ctx.strokeRect(
-        left, top, pixelWidth, pixelHeight
-      );
+ctx.strokeStyle = "#cccccc";
+ctx.lineWidth = 1;
+ctx.strokeRect(
+  left, top, pixelSize, pixelSize
+);
     }
   }
 
@@ -304,9 +308,31 @@ document.getElementById("raw")
 
 document.getElementById("saveImage")
   .addEventListener("click", () => {
+
+    const pixelSize = Math.min(
+      canvas.width / imageWidth,
+      canvas.height / imageHeight
+    );
+
+    const exportCanvas = document.createElement("canvas");
+    exportCanvas.width = Math.round(imageWidth * pixelSize);
+    exportCanvas.height = Math.round(imageHeight * pixelSize);
+
+    const exportCtx = exportCanvas.getContext("2d");
+
+    exportCtx.drawImage(
+      canvas,
+      0, 0,
+      imageWidth * pixelSize,
+      imageHeight * pixelSize,
+      0, 0,
+      exportCanvas.width,
+      exportCanvas.height
+    );
+
     const link = document.createElement("a");
     link.download = "mein-pixelbild.png";
-    link.href = canvas.toDataURL("image/png");
+    link.href = exportCanvas.toDataURL("image/png");
     link.click();
   });
 
